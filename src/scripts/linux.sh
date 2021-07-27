@@ -1,7 +1,11 @@
 # Function to setup environment for self-hosted runners.
 self_hosted_helper() {
+  if ! command -v sudo >/dev/null; then
+    apt-get install -y sudo || add_log "${cross:?}" "sudo" "Could not install sudo"
+  fi
   if ! command -v apt-fast >/dev/null; then
     sudo ln -sf /usr/bin/apt-get /usr/bin/apt-fast
+    trap "sudo rm -f /usr/bin/apt-fast 2>/dev/null" exit
   fi
   install_packages apt-transport-https curl make software-properties-common unzip autoconf automake gcc g++
   add_ppa ondrej/php
@@ -21,7 +25,7 @@ cleanup_lists() {
 # Function to add ppa:ondrej/php.
 add_ppa() {
   ppa=${1:-ondrej/php}
-  if [ "$DISTRIB_RELEASE" = "16.04" ] && [ "$ppa" = "ondrej/php" ]; then
+  if [ "$VERSION_ID" = "16.04" ] && [ "$ppa" = "ondrej/php" ]; then
     LC_ALL=C.UTF-8 sudo apt-add-repository --remove ppa:"$ppa" -y || true
     LC_ALL=C.UTF-8 sudo apt-add-repository http://setup-php.com/ondrej/php/ubuntu -y
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 4f4ea0aae5267a6c
@@ -29,7 +33,7 @@ add_ppa() {
     cleanup_lists "$(dirname "$ppa")"
     LC_ALL=C.UTF-8 sudo apt-add-repository ppa:"$ppa" -y
   fi
-  if [ "$DISTRIB_RELEASE" = "16.04" ]; then
+  if [ "$VERSION_ID" = "16.04" ]; then
     sudo "$debconf_fix" apt-get update
   fi
 }
@@ -277,11 +281,11 @@ debconf_fix="DEBIAN_FRONTEND=noninteractive"
 apt_install="sudo $debconf_fix apt-fast install -y"
 scripts="${dist}"/../src/scripts
 
+. /etc/os-release
 # shellcheck source=.
 . "${scripts:?}"/ext/source.sh
 . "${scripts:?}"/tools/add_tools.sh
 . "${scripts:?}"/common.sh
-. /etc/lsb-release
 read_env
 self_hosted_setup
 setup_php
