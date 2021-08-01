@@ -11,7 +11,7 @@ set_base_version() {
 update_lists_helper() {
   list=${1:-"$list_dir"/../sources.list}
   command -v sudo >/dev/null && SUDO=sudo
-  ${SUDO} apt-get update -o Dir::Etc::sourcelist="$list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" >/dev/null 2>&1
+  ${SUDO} apt-get update -o Dir::Etc::sourcelist="$list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" 
 }
 
 # Function to update the package lists.
@@ -23,7 +23,7 @@ update_lists() {
       list="$list_dir"/"$(basename "$(grep -r "$ppa_url" "$list_dir" | cut -d ':' -f 1)")"
     fi
     update_lists_helper "$list"
-    echo '' | sudo tee /tmp/setup_php >/dev/null 2>&1
+    echo '' | sudo tee /tmp/setup_php 
   fi
 }
 
@@ -39,7 +39,7 @@ add_key() {
   [ ! -e "$key_source" ] && get -q -n "$key_file" "$key_source"
   file_type=$(file "$key_file")
   if [[ "$file_type" =~ .*('Public-Key (old)'|'Secret-Key') ]]; then
-    sudo gpg --batch --yes --dearmor "$key_file" >/dev/null 2>&1 && sudo rm -f "$key_file"
+    sudo gpg --batch --yes --dearmor "$key_file"  && sudo rm -f "$key_file"
     sudo mv "$key_file".gpg "$key_file"
   fi
 }
@@ -55,7 +55,7 @@ add_list() {
   [ -e "$key_source" ] && key_file=$key_source || key_file="$key_dir"/"${ppa/\//-}"-keyring.gpg
   grep -qr "$ppa_url" "$list_dir" && return;
   add_key "$ppa" "$key_source" "$key_file"
-  echo "deb [arch=$arch signed-by=$key_file] $ppa_url $os_version $branch" | sudo tee "$list_dir"/"${ppa/\//-}".list >/dev/null 2>&1
+  echo "deb [arch=$arch signed-by=$key_file] $ppa_url $os_version $branch" | sudo tee "$list_dir"/"${ppa/\//-}".list 
   update_lists "$ppa" "$ppa_url"
 }
 
